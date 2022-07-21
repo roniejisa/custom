@@ -7,8 +7,9 @@
     },
     "require": {
         "php": ">=7.3",
-        "psr/log" : "^1.0",
+        "psr/log": "^1.0",
         "nesk/puphpeteer": "^2.0",
+        "nesk/rialto": "^1.4",
         "daandesmedt/phpheadlesschrome": "^1.1"
     },
     "extra": {
