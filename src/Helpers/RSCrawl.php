@@ -6,7 +6,7 @@ use daandesmedt\PHPHeadlessChrome\HeadlessChrome;
 use Illuminate\Support\Facades\Http;
 use Nesk\Puphpeteer\Puppeteer;
 
-class CrawlHelper
+class RSCrawl
 {
     public static $dataPuppeteer = [
         'socks5' => null,
