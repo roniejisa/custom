@@ -1,0 +1,16 @@
+{
+    "name": "roniejisa/custom",
+    "autoload": {
+        "psr-4": {
+            "Roniejisa\\Custom\\": "src"
+        }
+    },
+    "require": {},
+    "extra": {
+        "laravel": {
+            "aliases": {
+                "RSCustom": "Roniejisa\\Custom\\Helpers\\RSCustom"
+            }
+        }
+    }
+}
