@@ -7,12 +7,16 @@
     },
     "require": {
         "php": ">=7.3",
-        "daandesmedt/phpheadlesschrome": "^1.1"
+        "daandesmedt/phpheadlesschrome": "^1.1",
+        "psr/container": "^1.0|^2.0",
+        "psr/log": "^1.0|^2.0|^3.0",
+        "nesk/puphpeteer": ">=2.0"
     },
     "extra": {
         "laravel": {
             "aliases": {
-                "RSCustom": "Roniejisa\\Custom\\Helpers\\RSCustom"
+                "RSCustom": "Roniejisa\\Custom\\Helpers\\RSCustom",
+                "RSCrawl": "Roniejisa\\Custom\\Helpers\\RSCrawl"
             }
         }
     }
