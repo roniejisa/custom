@@ -231,4 +231,8 @@ class RSCustom
         }
         file_put_contents(public_path($pathAll), $content, FILE_APPEND);
     }
+
+    public static function test(){
+        return 'test update';
+    }
 }
