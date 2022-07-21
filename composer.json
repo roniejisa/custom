@@ -5,7 +5,11 @@
             "Roniejisa\\Custom\\": "src"
         }
     },
-    "require": {},
+    "require": {
+        "php": ">=7.3",
+        "nesk/puphpeteer": "*",
+        "daandesmedt/phpheadlesschrome": "*"
+    },
     "extra": {
         "laravel": {
             "aliases": {
