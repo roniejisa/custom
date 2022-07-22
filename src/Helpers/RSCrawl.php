@@ -16,37 +16,43 @@ class RSCrawl
     public static function puppeteer(string $url, string $socks5 = null)
     {
         $htmlDom = '';
+        $htmlDom = '';
         $configs = [
             'executable_path' => "/usr/bin/node",
-            'read_timeout' => 100000,
-            'idle_timeout' => 6000,
+            'idle_timeout' => 10000,
+            'read_timeout' => 10000,
+            'logger' => null,
+            'debug' => false,
         ];
 
         if (request()->ip() == '127.0.0.1') {
             $configs['executable_path'] = 'C:\Program Files\nodejs\node.exe';
         }
-
+        
         $puppeteer = new Puppeteer($configs);
         $arrayArguments = [
             '--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-gpu',
             '--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36',
+            '--ignore-certificate-errors',
+            '--ignore-certificate-errors-spki-list',
         ];
 
         if ($socks5 != null) {
             $arrayArguments[] = '--proxy-server=socks5://' . $socks5;
         }
-
         $browser = $puppeteer->launch([
             'args' => $arrayArguments,
+            "headless" => true,
+            "ignoreHTTPSErrors" => true,
         ]);
 
         $page = $browser->newPage();
 
         $page->goto($url, [
             'waitUntil' => 'load',
-            'timeout' => 0,
+            'timeout' => 8000,
         ]);
 
         $htmlDom = $page->content();
@@ -54,7 +60,7 @@ class RSCrawl
         return $htmlDom;
     }
 
-    public static function headless(string $url)
+    public static function headless(string $url, $socks5 = null)
     {
         $headlessChromer = new HeadlessChrome();
         $headlessChromer->setUrl($url);
@@ -65,8 +71,10 @@ class RSCrawl
             $headlessChromer->setBinaryPath('/usr/bin/google-chrome-stable');
         }
         $headlessChromer->setArgument('--user-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36');
+        if ($socks5 != null) {
+            $headlessChromer->setArgument('--proxy-server', $socks5);
+        }
         $headlessChromer->setOutputDirectory(__DIR__);
-        $headlessChromer->getDOM();
         return $headlessChromer->getDOM();
     }
 
