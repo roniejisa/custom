@@ -10,7 +10,7 @@ use Illuminate\Support\Collection;
 
 class RSCustom
 {
-    public static function paginate($items, $perPage = 15, $page = null, $options = [])
+    public static function paginate($items, int $perPage = 15, int $page = null, array $options = [])
     {
         $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
         $items = $items instanceof Collection ? $items : Collection::make($items);
@@ -24,38 +24,38 @@ class RSCustom
         return \DateTime::createFromFormat($format, $string);
     }
 
-    public static function showTime($time, $isDateTime = false, $format = "H:i d/m/Y")
+    public static function showTime(string $timeStr, bool $isDateTime = false, string $format = "H:i d/m/Y")
     {
         if ($isDateTime) {
-            $date = new DateTime($time);
+            $date = new DateTime($timeStr);
             return $date->format($format);
         }
-        $updateTime = strtotime($time);
+        $updateTime = strtotime($timeStr);
         $now = strtotime(date("Y-m-d H:i:s"));
-        $time = $updateTime - $now;
-        $day = floor($time / (24 * 60 * 60));
-        $hour = floor($time / (60 * 60));
-        $minutes = floor($time / 60);
-        $second = floor($time);
+        $timeNumber = $updateTime - $now;
+        $day = floor($timeNumber / (24 * 60 * 60));
+        $hour = floor($timeNumber / (60 * 60));
+        $minutes = floor($timeNumber / 60);
+        $second = floor($timeNumber);
         $isReverse = false;
-        if ($time < 0) {
+        if ($timeNumber < 0) {
             $isReverse = true;
-            $time = $now - $updateTime;
+            $timeNumber = $now - $updateTime;
         }
 
-        if ($time >= (365 * 24 * 60 * 60)) {
-            $year = floor(($time / (365 * 24 * 60 * 60)));
+        if ($timeNumber >= (365 * 24 * 60 * 60)) {
+            $year = floor(($timeNumber / (365 * 24 * 60 * 60)));
             $value = $year . " năm nữa";
-        } elseif ($time >= (30 * 24 * 60 * 60)) {
-            $month = floor($time / (30 * 24 * 60 * 60));
+        } elseif ($timeNumber >= (30 * 24 * 60 * 60)) {
+            $month = floor($timeNumber / (30 * 24 * 60 * 60));
             $value = $month . " tháng nữa";
-        } elseif ($time >= (2 * 24 * 60 * 60)) {
+        } elseif ($timeNumber >= (2 * 24 * 60 * 60)) {
             $value = date("H:i d/m/Y", $updateTime);
-        } elseif ($time >= (24 * 60 * 60)) {
+        } elseif ($timeNumber >= (24 * 60 * 60)) {
             $value = $day . " ngày nữa";
-        } elseif ($time >= (60 * 60)) {
+        } elseif ($timeNumber >= (60 * 60)) {
             $value = $hour . " giờ nữa";
-        } elseif ($time >= 60) {
+        } elseif ($timeNumber >= 60) {
             $value = $minutes . " phút nữa";
         } else {
             $value = $second . " giây nữa";
@@ -67,30 +67,30 @@ class RSCustom
         return $value;
     }
 
-    public static function showDateName($string, $format = 'l d-m-Y')
+    public static function showDateName(string $timeStr, string $format = 'l d-m-Y')
     {
-        if (self::isDateTime($string)) {
-            $stringName = Carbon::parse($string)->format($format);
-            return self::dateNameToVi($stringName);
+        if (self::isDateTime($timeStr)) {
+            $timeStr = Carbon::parse($timeStr)->format($format);
+            return self::dateNameToVi($timeStr);
         }
     }
 
-    public static function dateNameToVi($string)
+    public static function dateNameToVi(string $timeStr)
     {
-        if (is_int(strpos($string, 'Monday'))) {
-            $day = str_replace('Monday', 'Thứ 2', $string);
-        } elseif (is_int(strpos($string, 'Tuesday'))) {
-            $day = str_replace('Tuesday', 'Thứ 3', $string);
-        } elseif (is_int(strpos($string, 'Wednesday'))) {
-            $day = str_replace('Wednesday', 'Thứ 4', $string);
-        } elseif (is_int(strpos($string, 'Thursday'))) {
-            $day = str_replace('Thursday', 'Thứ 5', $string);
-        } elseif (is_int(strpos($string, 'Friday'))) {
-            $day = str_replace('Friday', 'Thứ 6', $string);
-        } elseif (is_int(strpos($string, 'Saturday'))) {
-            $day = str_replace('Saturday', 'Thứ 7', $string);
-        } elseif (is_int(strpos($string, 'Sunday'))) {
-            $day = str_replace('Sunday', 'CN', $string);
+        if (is_int(strpos($timeStr, 'Monday'))) {
+            $day = str_replace('Monday', 'Thứ 2', $timeStr);
+        } elseif (is_int(strpos($timeStr, 'Tuesday'))) {
+            $day = str_replace('Tuesday', 'Thứ 3', $timeStr);
+        } elseif (is_int(strpos($timeStr, 'Wednesday'))) {
+            $day = str_replace('Wednesday', 'Thứ 4', $timeStr);
+        } elseif (is_int(strpos($timeStr, 'Thursday'))) {
+            $day = str_replace('Thursday', 'Thứ 5', $timeStr);
+        } elseif (is_int(strpos($timeStr, 'Friday'))) {
+            $day = str_replace('Friday', 'Thứ 6', $timeStr);
+        } elseif (is_int(strpos($timeStr, 'Saturday'))) {
+            $day = str_replace('Saturday', 'Thứ 7', $timeStr);
+        } elseif (is_int(strpos($timeStr, 'Sunday'))) {
+            $day = str_replace('Sunday', 'CN', $timeStr);
         }
         return $day;
     }
@@ -117,14 +117,14 @@ class RSCustom
         return [$base64, $name, $type];
     }
 
-    public static function checkActive($haystack, $needle = true, $show = 'active')
+    public static function checkActive($haystack, bool $needle = true, string $show = 'active')
     {
         $needle = $needle ? url()->current() : $needle;
         $arrayHayStack = is_array($haystack) ? $haystack : [$haystack];
         return in_array($needle, $arrayHayStack) ? $show : '';
     }
 
-    public static function checkActiveParam($param, $arrayValue = [], $show = 'active')
+    public static function checkActiveParam($param, array $arrayValue = [], string $show = 'active')
     {
         $array = is_array($arrayValue) ? $arrayValue : [$arrayValue];
 
@@ -135,7 +135,7 @@ class RSCustom
         }
     }
 
-    public static function insertFileFromUrl($folder, $url)
+    public static function insertFileFromUrl(string $folder, string $url)
     {
         $urlCut = explode('/', $url);
         $name = $urlCut[count($urlCut) - 1];
@@ -154,15 +154,15 @@ class RSCustom
         return $fileFullPath;
     }
 
-    public static function replaceToCharacter($string, $character, $isStart = true, $lengthShow = 2, $after = false)
+    public static function replaceToCharacter(string $str, string $character, bool $isStart = true, int $lengthShow = 2, bool $after = false)
     {
         $afterString = '';
         if ($after) {
-            list($string, $afterString) = explode($after, $string);
+            list($str, $afterString) = explode($after, $str);
             $afterString = $after . $afterString;
         }
-        $length = mb_strlen($string) - $lengthShow;
-        $string = substr($string, $isStart ? -$lengthShow : 0, $lengthShow);
+        $length = mb_strlen($str) - $lengthShow;
+        $string = substr($str, $isStart ? -$lengthShow : 0, $lengthShow);
         for ($i = 0; $i < $length; $i++) {
             if ($isStart) {
                 $string = $character . $string;
@@ -173,7 +173,7 @@ class RSCustom
         return $string . $afterString;
     }
 
-    public static function URLPrevious($isSet = true, $defaultUrl = '/')
+    public static function URLPrevious(bool $isSet = true, string $defaultUrl = '/')
     {
         $key = 'PREVIOUS_URL_RS';
         if ($isSet) {
@@ -198,13 +198,13 @@ class RSCustom
         return $url;
     }
 
-    public static function setLinkCurrent($array)
+    public static function setLinkCurrent(array $params)
     {
-        return request()->fullUrlWithQuery(array_merge(request()->all(), $array));
+        return request()->fullUrlWithQuery(array_merge(request()->all(), $params));
     }
 
     // Lấy param trong url
-    public static function getParamUrl($url, $name = 'page')
+    public static function getParamUrl(string $url, string $name = 'page')
     {
         $url = parse_url($url);
         parse_str($url['query'], $params);
@@ -212,14 +212,14 @@ class RSCustom
     }
 
     // Cut string sau từ đầu đến trước từ cuối
-    public static function cutString($str, $start = "item-code=", $end = "&amp;")
+    public static function cutString(string $str, string $start = "item-code=", string $end = "&amp;")
     {
         $cutFirst = substr($str, strpos($str, $start) + strlen($start));
         return substr($cutFirst, 0, strpos($cutFirst, $end));
     }
 
     // Lưu log
-    public static function saveLog($pathAll, $content)
+    public static function saveLog(string $pathAll, string $content, $type = FILE_APPEND)
     {
         $paths = explode('/', $pathAll);
         $path = '';
@@ -229,6 +229,6 @@ class RSCustom
                 mkdir(public_path($path), 0777, true);
             }
         }
-        file_put_contents(public_path($pathAll), $content, FILE_APPEND);
+        file_put_contents(public_path($pathAll), $content, $type);
     }
 }
