@@ -3,18 +3,22 @@
 namespace Roniejisa\Custom\Helpers;
 
 use daandesmedt\PHPHeadlessChrome\HeadlessChrome;
+use function GuzzleHttp\Promise\settle;
+use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Http;
 use Nesk\Puphpeteer\Puppeteer;
+use Psr\Http\Message\ResponseInterface;
 
 class RSCrawl
 {
     private static $defaultData = [
         'method' => 'GET',
         'data' => [],
-        'socks5' => null,
+        'proxy' => null,
         'headers' => [],
         'isJson' => true,
         'getContent' => true,
+        'hasRedirect' => false,
     ];
 
     public static function puppeteer(string $url, array $data = [])
@@ -44,8 +48,8 @@ class RSCrawl
                 '--ignore-certificate-errors-spki-list',
             ];
 
-            if (!is_null(self::$defaultData['socks5'])) {
-                $arrayArguments[] = '--proxy-server=socks5://' . self::$defaultData['socks5'];
+            if (!is_null(self::$defaultData['proxy'])) {
+                $arrayArguments[] = '--proxy-server=proxy://' . self::$defaultData['proxy'];
             }
 
             $browser = $puppeteer->launch([
@@ -58,7 +62,7 @@ class RSCrawl
 
             $page->goto($url, [
                 'waitUntil' => 'load',
-                'timeout' => 8000,
+                'timeout' => 0,
             ]);
 
             $htmlDom = $page->content();
@@ -86,8 +90,8 @@ class RSCrawl
                 $headlessChromer->setBinaryPath('/usr/bin/google-chrome-stable');
             }
             $headlessChromer->setArgument('--user-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36');
-            if (!is_null(self::$defaultData['socks5'])) {
-                $headlessChromer->setArgument('--proxy-server', self::$defaultData['socks5']);
+            if (!is_null(self::$defaultData['proxy'])) {
+                $headlessChromer->setArgument('--proxy-server', self::$defaultData['proxy']);
             }
             $headlessChromer->setOutputDirectory(__DIR__);
             return $headlessChromer->getDOM();
@@ -101,34 +105,34 @@ class RSCrawl
     public static function guzzle(string $url, array $data = [])
     {
         // application / x-www-form-urlencoded
-        // try {
-        self::setDefaultData($data);
-        $defaultGuzzle = Http::withOptions([
-            'allow_redirects' => false,
-        ]);
-        if (count(self::$defaultData['headers']) > 0) {
-            $defaultGuzzle->withHeaders(self::$defaultData['headers']);
-        }
+        try {
+            self::setDefaultData($data);
+            $defaultGuzzle = Http::withOptions([
+                'allow_redirects' => false,
+            ]);
+            if (count(self::$defaultData['headers']) > 0) {
+                $defaultGuzzle->withHeaders(self::$defaultData['headers']);
+            }
 
-        if (!self::$defaultData['isJson']) {
-            $defaultGuzzle->asForm();
-        }
+            if (!self::$defaultData['isJson']) {
+                $defaultGuzzle->asForm();
+            }
 
-        self::setData($url);
+            self::setData($url);
 
-        $response = $defaultGuzzle->get($url, self::$defaultData['data']);
-        if (self::$defaultData['method'] == 'POST') {
-            $response = $defaultGuzzle->post($url, self::$defaultData['data']);
+            $response = $defaultGuzzle->get($url, self::$defaultData['data']);
+            if (self::$defaultData['method'] == 'POST') {
+                $response = $defaultGuzzle->post($url, self::$defaultData['data']);
+            }
+            if (!self::$defaultData['getContent']) {
+                return $response;
+            }
+            return $response->body();
+        } catch (\Exception $e) {
+            return [
+                'error' => $e->getMessage(),
+            ];
         }
-        if (!self::$defaultData['getContent']) {
-            return $response;
-        }
-        return $response->body();
-        // } catch (\Exception $e) {
-        //     return [
-        //         'error' => $e->getMessage(),
-        //     ];
-        // }
     }
 
     public static function curl(string $url, array $data = [])
@@ -147,9 +151,9 @@ class RSCrawl
             curl_setopt($curl, CURLOPT_FOLLOWLOCATION, 0);
 
             // SET PROXY
-            if (!is_null(self::$defaultData['socks5'])) {
+            if (!is_null(self::$defaultData['proxy'])) {
                 curl_setopt($curl, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5);
-                [$proxy, $port] = explode(':', self::$defaultData['socks5']);
+                [$proxy, $port] = explode(':', self::$defaultData['proxy']);
                 curl_setopt($curl, CURLOPT_PROXY, $proxy);
                 curl_setopt($curl, CURLOPT_PROXYPORT, $port);
             }
@@ -183,6 +187,35 @@ class RSCrawl
                 'error' => $e->getMessage(),
             ];
         }
+    }
+
+    public static function asyncRequest(array $listUrl, array $data = [])
+    {
+        self::setDefaultData($data);
+
+        $client = new Client([
+            'timeout' => 5,
+        ]);
+
+        $options = [
+            'headers' => self::$defaultData['headers'],
+            'query' => self::$defaultData['data'],
+            'allow_redirects' => self::$defaultData['hasRedirect'],
+        ];
+
+        if (!is_null(self::$defaultData['proxy'])) {
+            $options['proxy'] = self::$defaultData['proxy'];
+        }
+        $promises = [];
+        foreach ($listUrl as $key => $url) {
+            self::setData($url);
+            $promises[$key] = $client->requestAsync(self::$defaultData['method'], $url, $options)->then(
+                function (ResponseInterface $res) {
+                    return $res->getBody()->getContents();
+                }
+            );
+        }
+        return settle($promises)->wait();
     }
 
     public static function setDefaultData($data)
