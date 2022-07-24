@@ -194,21 +194,25 @@ class RSCrawl
         self::setDefaultData($data);
 
         $client = new Client([
-            'timeout' => 5,
+            'timeout' => 0,
+            'verify' => false,
         ]);
 
-        $options = [
-            'headers' => self::$defaultData['headers'],
-            'query' => self::$defaultData['data'],
-            'allow_redirects' => self::$defaultData['hasRedirect'],
-        ];
-
-        if (!is_null(self::$defaultData['proxy'])) {
-            $options['proxy'] = self::$defaultData['proxy'];
-        }
         $promises = [];
+        // Xử lý các url trong danh sách
         foreach ($listUrl as $key => $url) {
             self::setData($url);
+
+            $options = [
+                'headers' => self::$defaultData['headers'],
+                'query' => self::$defaultData['data'],
+                'allow_redirects' => self::$defaultData['hasRedirect'],
+            ];
+
+            if (!is_null(self::$defaultData['proxy'])) {
+                $options['proxy'] = self::$defaultData['proxy'];
+            }
+
             $promises[$key] = $client->requestAsync(self::$defaultData['method'], $url, $options)->then(
                 function (ResponseInterface $res) {
                     return $res->getBody()->getContents();
