@@ -17,6 +17,7 @@ class RSCrawl
         'proxy' => null,
         'headers' => [],
         'isJson' => true,
+        'options' => [],
         'getContent' => true,
         'hasRedirect' => false,
     ];
@@ -50,6 +51,10 @@ class RSCrawl
 
             if (!is_null(self::$defaultData['proxy'])) {
                 $arrayArguments[] = '--proxy-server=proxy://' . self::$defaultData['proxy'];
+            }
+
+            foreach (self::$defaultData['options'] as $key => $value) {
+                $arrayArguments[] = $key . '=' . $value;
             }
 
             $browser = $puppeteer->launch([
@@ -93,6 +98,9 @@ class RSCrawl
             if (!is_null(self::$defaultData['proxy'])) {
                 $headlessChromer->setArgument('--proxy-server', self::$defaultData['proxy']);
             }
+            foreach (self::$defaultData['options'] as $key => $value) {
+                $headlessChromer->setArgument($key, $value);
+            }
             $headlessChromer->setOutputDirectory(__DIR__);
             return $headlessChromer->getDOM();
         } catch (\Exception $e) {
@@ -107,9 +115,15 @@ class RSCrawl
         // application / x-www-form-urlencoded
         try {
             self::setDefaultData($data);
-            $defaultGuzzle = Http::withOptions([
+            $options = [
                 'allow_redirects' => false,
-            ]);
+            ];
+
+            foreach (self::$defaultData['options'] as $key => $value) {
+                $options[$key] = $value;
+            }
+            
+            $defaultGuzzle = Http::withOptions();
             if (count(self::$defaultData['headers']) > 0) {
                 $defaultGuzzle->withHeaders(self::$defaultData['headers']);
             }

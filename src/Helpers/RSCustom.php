@@ -231,4 +231,15 @@ class RSCustom
         }
         file_put_contents(public_path($pathAll), $content, $type);
     }
+
+    public static function changeAndPushParamURL($url, $paramName, $paramValue)
+    {
+        if (preg_match('/[?&](' . $paramName . ')=[^&]*/', $url)) {
+            $url = preg_replace('/([?&]' . $paramName . ')=[^&]*/', '$1=' . $paramValue, $url);
+        } else {
+            $url .= strpos($url, '?') ? '&' : '?';
+            $url .= $paramName . '=' . $paramValue;
+        }
+        return $url;
+    }
 }
