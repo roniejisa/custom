@@ -124,9 +124,14 @@ class RSCustom
         return in_array($needle, $arrayHayStack) ? $show : '';
     }
 
-    public static function checkActiveParam($param, array $arrayValue = [], string $show = 'active')
+    /**
+     * @param string $param
+     * @param string|array $value
+     * @return string
+     */
+    public static function checkActiveParam($param, $value = [], string $show = 'active')
     {
-        $array = is_array($arrayValue) ? $arrayValue : [$arrayValue];
+        $array = is_array($value) ? $value : [$value];
 
         if (is_array(request()->input($param))) {
             return count(array_intersect(request()->input($param), $array)) > 0 ? $show : '';
@@ -188,7 +193,7 @@ class RSCustom
             session()->forget($key, null);
         }
 
-        $arrayNotRedirect = ['.js', '.css', '_debugbar', 'javascript', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'svg'];
+        $arrayNotRedirect = ['.js', '.css', '_debugbar', 'javascript', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'svg', "accounts.google.com"];
         foreach ($arrayNotRedirect as $error) {
             if (strpos($url, $error) !== false) {
                 $url = url($defaultUrl);
@@ -241,5 +246,48 @@ class RSCustom
             $url .= $paramName . '=' . $paramValue;
         }
         return $url;
+    }
+
+    public static function getAllChild($model, string $field, string $field_parent, int $id, array $categoryIds = [])
+    {
+        $categoryIds[] = $id;
+        $items = $model::where($field_parent, $id)->get();
+        if ($items->count() > 0) {
+            foreach ($items as $item) {
+                $categoryIds = array_merge($categoryIds, self::getAllChild($model, $field, $field_parent, $item->$field, []));
+            }
+        }
+        return $categoryIds;
+    }
+
+    public static function getAllChildLevel($model, string $field, string $field_parent, int $id, array $categoryIds = [])
+    {
+        $categoryIds[] = $id;
+        $items = $model::where($field_parent, $id)->get();
+        if ($items->count() > 0) {
+            foreach ($items as $item) {
+                $categoryIds = array_merge($categoryIds, self::getAllChildLevel($model, $field, $field_parent, $item->$field, []));
+            }
+        }
+        return $categoryIds;
+    }
+
+    /**
+     * @param $model
+     * @param $field
+     * @param $field_parent
+     * @param $id
+     * @param $categoryIds // repository
+     */
+    public static function getAllParent($model, string $field, string $field_parent, int $id, array $categoryIds = []): array
+    {
+        $item = $model::where($field, $id)->first();
+        if ($item !== null) {
+            $categoryIds[] = $item->$field;
+        }
+        if ($item !== null && $item->$field_parent !== 0) {
+            return self::getAllParent($model, $field, $field_parent, $item->$field_parent, $categoryIds);
+        }
+        return $categoryIds;
     }
 }
